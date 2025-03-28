@@ -9,7 +9,7 @@ import { z } from 'zod';
 import { Card, CardContent } from '@/components/ui/card';
 
 const formSchema = z.object({
-  url: z.string().url('Please enter a valid URL including https://')
+  url: z.string().url('Please enter a valid domain name')
 });
 
 type UrlInputProps = {
@@ -75,7 +75,15 @@ export default function UrlInput({ onAnalyze, isLoading }: UrlInputProps) {
                     </div>
                     <FormControl>
                       <Input
-                        placeholder="https://example.com"
+                        placeholder="example.com"
+                        value={field.value}
+                        onChange={(e) => {
+                          let value = e.target.value;
+                          // Remove https:// if user types it
+                          value = value.replace(/^https?:\/\//i, '');
+                          // Set the value with https:// prefix
+                          field.onChange(`https://${value}`);
+                        }}
                         className="pl-11 pr-4 py-3.5 h-auto bg-white/10 border-0 text-white placeholder:text-white/60 backdrop-blur-sm rounded-lg shadow-md focus-visible:ring-white/30 focus-visible:bg-white/20"
                         {...field}
                       />
