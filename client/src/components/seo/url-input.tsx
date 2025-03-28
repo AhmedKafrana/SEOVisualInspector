@@ -9,15 +9,7 @@ import { z } from 'zod';
 import { Card, CardContent } from '@/components/ui/card';
 
 const formSchema = z.object({
-  url: z.string()
-    .min(1, 'Please enter a URL')
-    .transform(val => {
-      if (!val.startsWith('http://') && !val.startsWith('https://')) {
-        return `https://${val}`;
-      }
-      return val;
-    })
-    .pipe(z.string().url('Please enter a valid URL'))
+  url: z.string().url('Please enter a valid URL including https://')
 });
 
 type UrlInputProps = {
@@ -82,13 +74,8 @@ export default function UrlInput({ onAnalyze, isLoading }: UrlInputProps) {
                       <Link className="h-5 w-5 text-white/60" />
                     </div>
                     <FormControl>
-                      <div className="flex">
-                        <span className="inline-flex items-center px-3 text-sm text-white/60 bg-white/5 border border-r-0 border-white/20 rounded-l-md">
-                          https://
-                        </span>
-                        <Input
-                          className="rounded-l-none"
-                          placeholder="example.com"
+                      <Input
+                        placeholder="https://example.com"
                         className="pl-11 pr-4 py-3.5 h-auto bg-white/10 border-0 text-white placeholder:text-white/60 backdrop-blur-sm rounded-lg shadow-md focus-visible:ring-white/30 focus-visible:bg-white/20"
                         {...field}
                       />
