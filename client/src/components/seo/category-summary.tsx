@@ -4,6 +4,7 @@ import { Progress } from '@/components/ui/progress';
 
 interface CategorySummaryProps {
   analysis: SeoAnalysis;
+  onViewDetails?: (categoryType: string) => void;
 }
 
 // Helper to classify tags into categories
@@ -153,8 +154,25 @@ const StatusPill = ({ count, type }: { count: number, type: 'good' | 'warning' |
   );
 };
 
-export default function CategorySummary({ analysis }: CategorySummaryProps) {
+export default function CategorySummary({ analysis, onViewDetails }: CategorySummaryProps) {
   const categories = categorizeMetaTags(analysis.tags);
+
+  // Map category keys to tab selections
+  const getCategoryTabMapping = (key: string) => {
+    switch(key) {
+      case 'essentials': return 'summary';
+      case 'social': return 'social';
+      case 'technical': return 'all-tags';
+      case 'other': return 'all-tags';
+      default: return 'summary';
+    }
+  };
+
+  const handleViewDetails = (categoryKey: string) => {
+    if (onViewDetails) {
+      onViewDetails(getCategoryTabMapping(categoryKey));
+    }
+  };
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
@@ -180,7 +198,10 @@ export default function CategorySummary({ analysis }: CategorySummaryProps) {
               <span className="text-sm text-slate-600">
                 {category.total} {category.total === 1 ? 'tag' : 'tags'} analyzed
               </span>
-              <button className="inline-flex items-center text-xs font-medium text-primary hover:text-primary/80 transition-colors">
+              <button 
+                onClick={() => handleViewDetails(key)}
+                className="inline-flex items-center text-xs font-medium text-primary hover:text-primary/80 transition-colors hover:underline cursor-pointer"
+              >
                 View Details <ArrowRight className="h-3 w-3 ml-1" />
               </button>
             </div>

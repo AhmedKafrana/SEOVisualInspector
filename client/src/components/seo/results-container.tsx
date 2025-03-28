@@ -144,7 +144,10 @@ export default function ResultsContainer({ analysis }: ResultsContainerProps) {
           </div>
           
           {/* Category Summaries */}
-          <CategorySummary analysis={analysis} />
+          <CategorySummary 
+            analysis={analysis} 
+            onViewDetails={(categoryTab) => setActiveTab(categoryTab as TabType)} 
+          />
         </div>
       </div>
 
