@@ -2,7 +2,8 @@ import { SeoAnalysis, MetaTag } from '@shared/schema';
 import { 
   CheckCircle, 
   AlertTriangle, 
-  XCircle 
+  XCircle,
+  Info
 } from 'lucide-react';
 import CopyCodeBlock from '@/components/ui/copy-code-block';
 import TagIndicator from '@/components/ui/tag-indicator';
@@ -12,7 +13,7 @@ type SummaryTabProps = {
 };
 
 // Helper function to get the status icon
-const StatusIcon = ({ status }: { status: string }) => {
+const StatusIcon = ({ status }: { status: "good" | "warning" | "missing" | "error" }) => {
   switch(status) {
     case 'good':
       return <CheckCircle className="h-5 w-5 text-success mr-2" />;
@@ -22,12 +23,12 @@ const StatusIcon = ({ status }: { status: string }) => {
     case 'error':
       return <XCircle className="h-5 w-5 text-danger mr-2" />;
     default:
-      return null;
+      return <Info className="h-5 w-5 text-primary mr-2" />;
   }
 };
 
 // Helper to get background color based on status
-const getStatusBgClass = (status: string) => {
+const getStatusBgClass = (status: "good" | "warning" | "missing" | "error") => {
   switch(status) {
     case 'good': return 'bg-green-50 border-green-100';
     case 'warning': return 'bg-amber-50 border-amber-100';
@@ -37,8 +38,19 @@ const getStatusBgClass = (status: string) => {
   }
 };
 
+// Helper to get border color based on status
+const getStatusBorderColor = (status: "good" | "warning" | "missing" | "error") => {
+  switch(status) {
+    case 'good': return 'border-green-200';
+    case 'warning': return 'border-amber-200';
+    case 'missing':
+    case 'error': return 'border-red-200';
+    default: return 'border-slate-200';
+  }
+};
+
 // Helper to get critical tags for summary view
-const getCriticalTags = (tags: MetaTag[]) => {
+const getCriticalTags = (tags: MetaTag[]): MetaTag[] => {
   const criticalTagTypes = [
     { tagType: 'title', attribute: '' },
     { tagType: 'meta', attribute: 'name="description"' },
@@ -57,7 +69,7 @@ const getCriticalTags = (tags: MetaTag[]) => {
       tagType: criticalTag.tagType,
       attribute: criticalTag.attribute,
       value: undefined,
-      status: 'missing',
+      status: 'missing' as const,
       recommendation: `Add a ${criticalTag.tagType} ${criticalTag.attribute} tag to improve SEO.`
     };
   });
@@ -79,103 +91,104 @@ const getTagHtml = (tag: MetaTag) => {
   }
 };
 
+// Helper to get tag display name
+const getTagDisplayName = (tag: MetaTag) => {
+  if (tag.tagType === 'title') return 'Title';
+  if (tag.tagType === 'meta' && tag.attribute?.includes('description')) return 'Description';
+  if (tag.tagType === 'link' && tag.attribute?.includes('canonical')) return 'Canonical';
+  if (tag.tagType === 'meta' && tag.attribute?.includes('viewport')) return 'Viewport';
+  if (tag.tagType === 'meta' && tag.attribute?.includes('robots')) return 'Robots';
+  
+  return tag.tagType === 'meta' && tag.attribute 
+    ? tag.attribute.split('=')[0].replace('name', '').replace('"', '') 
+    : tag.tagType;
+};
+
 export default function SummaryTab({ analysis }: SummaryTabProps) {
   const criticalTags = getCriticalTags(analysis.tags);
   
   return (
-    <>
-      {/* Overall Score */}
-      <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold">SEO Score</h2>
-          <span className="text-2xl font-bold text-primary">{analysis.score}/100</span>
+    <div className="p-6">
+      {/* SEO Quick Tips */}
+      <div className="mb-8 bg-primary/5 border border-primary/10 rounded-lg p-5">
+        <div className="flex items-start mb-4">
+          <div className="p-2 bg-primary/10 rounded-full mr-3">
+            <Info className="h-5 w-5 text-primary" />
+          </div>
+          <div>
+            <h3 className="font-semibold text-slate-800">SEO Quick Tips</h3>
+            <p className="text-sm text-slate-600 mt-1">These critical tags have the biggest impact on your SEO performance.</p>
+          </div>
         </div>
         
-        <div className="w-full bg-slate-200 rounded-full h-2.5 mb-4">
-          <div 
-            className="bg-primary h-2.5 rounded-full" 
-            style={{ width: `${analysis.score}%` }}
-          ></div>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-          <div className="p-4 bg-green-50 rounded-lg border border-green-100">
-            <div className="flex items-center">
-              <div className="p-2 bg-success bg-opacity-20 rounded-full mr-3">
-                <CheckCircle className="h-5 w-5 text-success" />
-              </div>
-              <div>
-                <span className="block text-sm font-medium">Good Tags</span>
-                <span className="text-lg font-semibold">{analysis.goodCount}</span>
-              </div>
-            </div>
-          </div>
-          
-          <div className="p-4 bg-amber-50 rounded-lg border border-amber-100">
-            <div className="flex items-center">
-              <div className="p-2 bg-warning bg-opacity-20 rounded-full mr-3">
-                <AlertTriangle className="h-5 w-5 text-warning" />
-              </div>
-              <div>
-                <span className="block text-sm font-medium">Warnings</span>
-                <span className="text-lg font-semibold">{analysis.warningCount}</span>
-              </div>
-            </div>
-          </div>
-          
-          <div className="p-4 bg-red-50 rounded-lg border border-red-100">
-            <div className="flex items-center">
-              <div className="p-2 bg-danger bg-opacity-20 rounded-full mr-3">
-                <XCircle className="h-5 w-5 text-danger" />
-              </div>
-              <div>
-                <span className="block text-sm font-medium">Missing/Issues</span>
-                <span className="text-lg font-semibold">{analysis.missingCount}</span>
-              </div>
-            </div>
-          </div>
-        </div>
+        <ul className="space-y-2 text-sm">
+          <li className="flex items-start">
+            <CheckCircle className="h-4 w-4 text-success mr-2 mt-0.5 flex-shrink-0" />
+            <span className="text-slate-700">Make sure your title is between 30-60 characters and includes your primary keyword.</span>
+          </li>
+          <li className="flex items-start">
+            <CheckCircle className="h-4 w-4 text-success mr-2 mt-0.5 flex-shrink-0" />
+            <span className="text-slate-700">Write a compelling meta description between 50-160 characters that encourages clicks.</span>
+          </li>
+          <li className="flex items-start">
+            <CheckCircle className="h-4 w-4 text-success mr-2 mt-0.5 flex-shrink-0" />
+            <span className="text-slate-700">Include a canonical URL to prevent duplicate content issues.</span>
+          </li>
+          <li className="flex items-start">
+            <CheckCircle className="h-4 w-4 text-success mr-2 mt-0.5 flex-shrink-0" />
+            <span className="text-slate-700">Set proper viewport meta tag for responsive design and better mobile rankings.</span>
+          </li>
+        </ul>
       </div>
 
       {/* Critical SEO Tags */}
-      <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-        <h2 className="text-xl font-semibold mb-4">Critical SEO Tags</h2>
-        
-        <div className="space-y-4">
-          {criticalTags.map((tag, index) => (
-            <div 
-              key={index} 
-              className={`p-4 rounded-lg border ${getStatusBgClass(tag.status)}`}
-            >
-              <div className="flex flex-wrap items-start justify-between gap-2">
-                <div className="flex items-center">
-                  <StatusIcon status={tag.status} />
-                  <span className="font-semibold">{tag.tagType === 'meta' ? tag.attribute.split('=')[0].replace('name', '').replace('"', '') : tag.tagType}</span>
-                </div>
-                <TagIndicator status={tag.status} value={
-                  tag.tagType === 'title' && tag.value 
-                    ? `${tag.value.length} chars`
-                    : tag.tagType === 'meta' && tag.attribute === 'name="description"' && tag.value
-                      ? `${tag.value.length} chars`
-                      : tag.status
-                } />
+      <h2 className="text-xl font-semibold mb-4">Critical SEO Tags</h2>
+      
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {criticalTags.map((tag, index) => (
+          <div 
+            key={index} 
+            className={`rounded-lg border ${getStatusBorderColor(tag.status)} bg-white overflow-hidden shadow-sm transition hover:shadow-md`}
+          >
+            <div className={`flex items-center justify-between px-4 py-3 ${getStatusBgClass(tag.status)}`}>
+              <div className="flex items-center">
+                <StatusIcon status={tag.status} />
+                <span className="font-semibold">{getTagDisplayName(tag)}</span>
               </div>
-              <div className="mt-2">
-                <CopyCodeBlock code={getTagHtml(tag)} />
-                
-                {tag.recommendation && (
-                  <p className={`mt-2 text-sm ${
-                    tag.status === 'warning' ? 'text-amber-800' : 
-                    tag.status === 'missing' || tag.status === 'error' ? 'text-red-800' : ''
-                  }`}>
-                    <strong>Recommendation:</strong> {tag.recommendation}
-                  </p>
+              <TagIndicator status={tag.status} value={
+                tag.tagType === 'title' && tag.value 
+                  ? `${tag.value.length} chars`
+                  : tag.tagType === 'meta' && tag.attribute === 'name="description"' && tag.value
+                    ? `${tag.value.length} chars`
+                    : tag.status
+              } />
+            </div>
+            
+            <div className="p-4">
+              <div className="mb-3">
+                {tag.value ? (
+                  <div className="font-mono text-sm bg-slate-50 p-2 rounded border border-slate-100 break-words max-h-20 overflow-y-auto">
+                    {tag.value}
+                  </div>
+                ) : (
+                  <div className="text-sm text-slate-500 italic p-2">No value provided</div>
                 )}
               </div>
+              
+              <CopyCodeBlock code={getTagHtml(tag)} />
+              
+              {tag.recommendation && (
+                <div className={`mt-3 text-sm p-2 rounded ${
+                  tag.status === 'warning' ? 'bg-amber-50 text-amber-800' : 
+                  tag.status === 'missing' || tag.status === 'error' ? 'bg-red-50 text-red-800' : 'bg-slate-50'
+                }`}>
+                  <strong>Recommendation:</strong> {tag.recommendation}
+                </div>
+              )}
             </div>
-          ))}
-        </div>
+          </div>
+        ))}
       </div>
-    </>
+    </div>
   );
 }
